@@ -1,3 +1,7 @@
 from analysis_tool.audio.openai_api import OpenAISpeechToText
+from analysis_tool.audio.volume_analyzer import get_max_min_volumes
 
-OpenAISpeechToText().generate_transcription("odwracanie_sie__przerywniki__zmiana_tematu_wypowiedzi")
+# OpenAISpeechToText().generate_transcription("odwracanie_sie__przerywniki__zmiana_tematu_wypowiedzi")
+# get_max_min_volumes("odwracanie_sie__przerywniki__zmiana_tematu_wypowiedzi")
+OpenAISpeechToText().generate_transcription("za_duzo_liczb__drugi_plan__odwracanie_sie")
+
