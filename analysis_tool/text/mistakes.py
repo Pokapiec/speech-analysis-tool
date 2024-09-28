@@ -1,9 +1,14 @@
 from openai.types.audio import TranscriptionVerbose
 
-from analysis_tool.mistakes.mistakes import MistakeType
+from analysis_tool.mistakes.mistakes import MistakeType, MistakeCategory
 from analysis_tool.mistakes.models import Mistake
 
 LONG_PAUSE_THRESHOLD = 2
+
+
+def get_text_mistakes(transcription: TranscriptionVerbose) -> list[Mistake]:
+    pauses = find_pauses(transcription)
+    return pauses
 
 
 def find_pauses(transcription: TranscriptionVerbose) -> list[Mistake]:
@@ -16,6 +21,7 @@ def find_pauses(transcription: TranscriptionVerbose) -> list[Mistake]:
             mistakes.append(
                 Mistake(
                     type=MistakeType.PAUSING,
+                    category=MistakeCategory.TEXT,
                     confidence=1,
                     start_ts=previous_word.end,
                     end_ts=next_word.start,

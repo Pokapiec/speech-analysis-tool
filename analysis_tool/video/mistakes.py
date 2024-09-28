@@ -3,10 +3,15 @@ import os
 import cv2
 import numpy as np
 
-from analysis_tool.mistakes.mistakes import MistakeType
+from analysis_tool.mistakes.mistakes import MistakeType, MistakeCategory
 from analysis_tool.mistakes.models import Mistake
 from analysis_tool.params import PROJECT_ROOT
 from analysis_tool.video.video_parser import VideoParser
+
+
+def get_video_mistakes(mp4: VideoParser) -> list[Mistake]:
+    other_people_mistakes = recognize_other_people(mp4)
+    return other_people_mistakes
 
 
 def recognize_other_people(mp4: VideoParser) -> list[Mistake]:
@@ -87,6 +92,7 @@ def recognize_other_people(mp4: VideoParser) -> list[Mistake]:
             mistakes.append(
                 Mistake(
                     type=MistakeType.SECOND_PLAN_PERSON,
+                    category=MistakeCategory.VIDEO,
                     start_ts=current_time,
                     confidence=average_confidence,
                 )

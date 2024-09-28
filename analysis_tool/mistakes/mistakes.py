@@ -1,6 +1,12 @@
 from enum import StrEnum
 
 
+class MistakeCategory(StrEnum):
+    VIDEO = "VIDEO"
+    AUDIO = "AUDIO"
+    TEXT = "TEXT"
+
+
 class MistakeType(StrEnum):
     # ============== TEXT =================
     # Searching for single character repetitions in single string like `yyy` or `eee`
