@@ -1,7 +1,7 @@
 from enum import StrEnum
 
 
-class Mistake(StrEnum):
+class MistakeType(StrEnum):
     # ============== TEXT =================
     # Searching for single character repetitions in single string like `yyy` or `eee`
     INTERLUDES = "interludes"
@@ -22,7 +22,6 @@ class Mistake(StrEnum):
     FALSE_WORDS = "false words"
     PASSIVE_SIDE = "use of the passive side, e.g. given, indicated, summarized"
 
-
     # ============== AUDIO =================
 
     # Search for too high decibels in wav file. 70-80db is perfect speech volume (acc. to internet)
@@ -34,7 +33,6 @@ class Mistake(StrEnum):
     # Here we have to search for over 5 second low dB values in wav file
     PAUSING = "pausing too long"
 
-
     # ============== VIDEO =================
 
     # Face recognition, there should be only one face (big face, can be more smaller ones but one big xD)
@@ -42,4 +40,3 @@ class Mistake(StrEnum):
     TURNING_AWAY = "turning away, twisting, gesticulating"
     FACIAL_EXPRESSIONS = "facial expressions"
     INCONSISTENT_TRANSCRIPT = "inconsistent speech with the transcript"
-

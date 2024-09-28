@@ -1,7 +1,5 @@
-# Downloading voks model
+# Setup
 
-https://alphacephei.com/vosk/models
+Download `yolov4-tiny.weights` from url below and move to `analysis_tool/video/yolo_config`
 
-We use `vosk-model-small-pl-0.22` model. (Nevermind, vosk sucks!!! Not accurate at all.)
-
-`SpeachRecognition` lib was great but unfortunately did not support timestamp tracked recognition.
+https://github.com/AlexeyAB/darknet/releases/download/yolov4-tiny/yolov4-tiny.weights

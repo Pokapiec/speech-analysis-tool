@@ -1,5 +1,7 @@
 import os
+
 from openai import OpenAI
+
 from analysis_tool.params import load_envs
 
 VIDEO_FILES_PATH = "./video_files"
@@ -32,4 +34,3 @@ class OpenAISpeechToText:
                 language="polish",
             )
             print(f"{transcript = }")
-
