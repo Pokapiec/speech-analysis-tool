@@ -1,0 +1,19 @@
+a) przerywniki (yyy, aaa) - bez AI
+b) za szybkie tempo mówienia - słowa/min okno czasowe (easy)
+c) powtórzenia - zliczanie (easy)
+d) zmiana tematu wypowiedzi - semantyczna analiza (trudne)
+e) za dużo liczb - liczby/min (easy) - fuzzy matching - zobaczymy
+f) za długie, trudne słowa, zdania - chyba bez AI (medium)
+g) żargon - słownik w libce/tłumacz - może być hard
+h) obcy język - słownik
+i) za długa pauza - threshold X (easy)
+j) mówienie głośniej - empirycznie threshold (easy)
+k) mówienie za cicho, szeptem -  empirycznie threshold (easy)
+l) drugi plan – inna osoba na planie - rozpoznawanie po wektorach z openCV
+m) odwracanie się, przekręcenia, gestykulacja - tracking głowy/oczu/rąk TBD
+n) mimika -
+o) nieprawdziwe słowa - analiza AI
+p) niezgodna wypowiedź z transkrypcją - hard
+q) szum - threshold (easy)
+r) używanie strony biernej np. podano, wskazano, podsumowano
+s) akcentowanie - dB w słowie vs miejsce akcentu (hard)
