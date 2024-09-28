@@ -1,0 +1,3 @@
+from analysis_tool.audio.openai_api import OpenAISpeechToText
+
+OpenAISpeechToText().generate_transcription("odwracanie_sie__przerywniki__zmiana_tematu_wypowiedzi")

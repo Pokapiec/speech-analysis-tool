@@ -1,0 +1,6 @@
+.venv
+.env
+
+models
+video_files
+audio_files
