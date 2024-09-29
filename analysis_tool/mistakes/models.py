@@ -10,3 +10,4 @@ class Mistake:
     confidence: float  # 0-100%
     start_ts: float
     end_ts: float | None = None
+    detail: str | None = None
