@@ -23,6 +23,14 @@ class TextErrorsParser:
 
         return breaks
 
+    @staticmethod
+    def _count_syllables(word) -> int:
+        # Polish vowels
+        vowels = "aeiouyąęó"
+        word = word.lower()
+        syllable_count = sum(1 for char in word if char in vowels)
+        return syllable_count
+
     def calculate_speech_pace(self) -> float:  # TODO: Tests
         """Calculate speech pace excluding long breaks that pollute the output."""
         TOO_FAST_SPEAKING = 160  # Word per minute
@@ -48,10 +56,10 @@ class TextErrorsParser:
         string_words = [w.word for w in self.transcript.words]
         for word in string_words:
             for said_word in said_words:
-                similarity = difflib.SequenceMatcher(None, word, said_word).ratio()
+                similarity = difflib.SequenceMatcher(None, word.lower(), said_word.lower()).ratio()
 
                 # Similarity works well but most of the time, words have to start with same letter and not be connectors like `i` or `na` 
-                if similarity > 0.7 and word[0] == said_word[0] and len(word) > 2:
+                if similarity > 0.7 and word[0].lower() == said_word[0].lower() and len(word) > 2:
                     repetitions.extend([word, said_word])
             
             said_words.append(word)
@@ -78,3 +86,11 @@ class TextErrorsParser:
         
         print(f"{sentences_num_count = }")
         return sentences_num_count
+
+    def calculate_fog_index(self) -> float:
+        word_count = len(self.transcript.words)
+        sentence_count = len([s for s in self.transcript.text.split(".") if s])
+        long_words_count = len([w for w in self.transcript.words if self._count_syllables(w.word) > 3])
+
+        # FOG index equation fro wikipedia
+        return 0.4 * ((word_count / sentence_count) + 100 * (long_words_count / word_count))
