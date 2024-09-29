@@ -1,6 +1,9 @@
 import os
+from datetime import timedelta
+from math import sqrt
 
 import cv2
+import mediapipe as mp
 import numpy as np
 
 from analysis_tool.mistakes.mistakes import MistakeType, MistakeCategory
@@ -9,15 +12,14 @@ from analysis_tool.params import PROJECT_ROOT
 from analysis_tool.video.video_parser import VideoParser
 
 
-def get_video_mistakes(mp4: VideoParser) -> list[Mistake]:
-    other_people_mistakes = recognize_other_people(mp4)
-    return other_people_mistakes
+def get_video_mistakes(video: VideoParser) -> list[Mistake]:
+    other_people_mistakes = recognize_other_people(video)
+    turning_away_mistakes = detect_turning_away_and_gestures(video)
+    return [*other_people_mistakes, *turning_away_mistakes]
 
 
-def recognize_other_people(mp4: VideoParser) -> list[Mistake]:
-    yolo_config = os.path.join(
-        PROJECT_ROOT, "analysis_tool", "video", "yolo_config"
-    )
+def recognize_other_people(video: VideoParser) -> list[Mistake]:
+    yolo_config = os.path.join(PROJECT_ROOT, "analysis_tool", "video", "yolo_config")
     net = cv2.dnn.readNet(
         os.path.join(yolo_config, "yolov4-tiny.weights"),
         os.path.join(yolo_config, "yolov4-tiny.cfg"),
@@ -26,7 +28,7 @@ def recognize_other_people(mp4: VideoParser) -> list[Mistake]:
     layer_names = net.getLayerNames()
     output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers()]
 
-    cap = cv2.VideoCapture(mp4.file_path)
+    cap = cv2.VideoCapture(video.file_path)
     frame_count = 0
 
     mistakes = []
@@ -38,7 +40,7 @@ def recognize_other_people(mp4: VideoParser) -> list[Mistake]:
             break
 
         # Process people every 100ms
-        if frame_count % (mp4.fps * 0.1) != 0:
+        if frame_count % (video.fps * 0.1) != 0:
             frame_count += 1
             continue
 
@@ -86,9 +88,7 @@ def recognize_other_people(mp4: VideoParser) -> list[Mistake]:
         # When second person enters the frame
         if people_count > 1 and not other_person_detected:
             other_person_detected = True
-            average_confidence = np.mean(
-                [confidences[i] for i in indices.flatten()]
-            )
+            average_confidence = np.mean([confidences[i] for i in indices.flatten()])
             mistakes.append(
                 Mistake(
                     type=MistakeType.SECOND_PLAN_PERSON,
@@ -101,11 +101,111 @@ def recognize_other_people(mp4: VideoParser) -> list[Mistake]:
         # When second person leaves the frame
         if people_count == 1 and other_person_detected:
             other_person_detected = False
-            average_confidence = np.mean(
-                [confidences[i] for i in indices.flatten()]
-            )
+            average_confidence = np.mean([confidences[i] for i in indices.flatten()])
             mistakes[-1].confidence = (mistakes[-1].confidence + average_confidence) / 2
             mistakes[-1].end_ts = current_time
 
     cap.release()
+    return mistakes
+
+
+def detect_turning_away_and_gestures(video: VideoParser) -> list[Mistake]:
+    face_cascade = cv2.CascadeClassifier(
+        cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+    )
+
+    # Setup for hand gesture detection
+    mp_hands = mp.solutions.hands
+    hands = mp_hands.Hands(max_num_hands=2, min_detection_confidence=0.7)
+
+    cap = cv2.VideoCapture(video.file_path)
+    mistakes: list[Mistake] = []
+    turning_away = False
+    previous_hand_positions = None
+    detection_started = False
+    frame_count = 0
+
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        # Process every 100ms
+        if frame_count % (video.fps * 0.1) != 0:
+            frame_count += 1
+            continue
+
+        frame_count += 1
+
+        # Detect faces (Turning Away Detection)
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(
+            gray_frame, scaleFactor=1.3, minNeighbors=5
+        )
+        current_time = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0  # Timestamp in seconds
+
+        # Turning Away Logic
+        if len(faces) > 0:
+            detection_started = True
+            if turning_away:
+                turning_away = False
+                mistakes[-1].end_ts = current_time  # Set end timestamp for turning away
+        else:
+            if not turning_away and detection_started:
+                turning_away = True
+                mistakes.append(
+                    Mistake(
+                        type=MistakeType.MOVING,
+                        category=MistakeCategory.VIDEO,
+                        confidence=1,
+                        start_ts=current_time,
+                    )
+                )
+
+        # Hand Gesture Detection using MediaPipe
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        hand_results = hands.process(rgb_frame)
+
+        current_hand_positions = []
+
+        if hand_results.multi_hand_landmarks:
+            for hand_landmarks in hand_results.multi_hand_landmarks:
+                for landmark in hand_landmarks.landmark:
+                    # Store the (x, y) coordinates of each hand landmark
+                    current_hand_positions.append((landmark.x, landmark.y))
+
+            # Check if hands have moved
+            if previous_hand_positions is not None:
+                moved = False
+                for prev_pos, curr_pos in zip(
+                    previous_hand_positions, current_hand_positions
+                ):
+                    movement_length = sqrt(
+                        (curr_pos[0] - prev_pos[0]) ** 2
+                        + (curr_pos[1] - prev_pos[1]) ** 2
+                    )
+                    if movement_length > 0.04:
+                        moved = True
+                        break
+
+                # Hand movement logic
+                if detection_started and moved:
+                    mistakes.append(
+                        Mistake(
+                            type=MistakeType.MOVING,
+                            category=MistakeCategory.VIDEO,
+                            confidence=1,
+                            start_ts=current_time,
+                            end_ts=current_time + 1,
+                        )
+                    )
+                    frame_count += video.fps  # refractory period
+
+            # Update previous positions
+            previous_hand_positions = current_hand_positions
+        else:
+            previous_hand_positions = None  # Reset if no hands detected
+
+    cap.release()
+    cv2.destroyAllWindows()
     return mistakes

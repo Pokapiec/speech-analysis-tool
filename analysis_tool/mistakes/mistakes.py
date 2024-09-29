@@ -43,6 +43,6 @@ class MistakeType(StrEnum):
 
     # Face recognition, there should be only one face (big face, can be more smaller ones but one big xD)
     SECOND_PLAN_PERSON = "second plan - another person on the set"
-    TURNING_AWAY = "turning away, twisting, gesticulating"
+    MOVING = "turning away, twisting, gesticulating"
     FACIAL_EXPRESSIONS = "facial expressions"
     INCONSISTENT_TRANSCRIPT = "inconsistent speech with the transcript"
