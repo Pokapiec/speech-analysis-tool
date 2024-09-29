@@ -1,12 +1,11 @@
 import difflib
 import os
+from functools import cache
 
 import cv2
 import easyocr
 
 from analysis_tool.params import VIDEO_FILES_PATH, AUDIO_FILES_PATH
-
-reader = easyocr.Reader(["pl"], gpu=True)
 
 
 class VideoParser:
@@ -23,17 +22,24 @@ class VideoParser:
         self.width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.duration = self.frame_count / self.fps  # in seconds
-        self.ocr_subtitles = self.extract_subtitles()
 
         cap.release()
+
+    @property
+    @cache
+    def ocr_subtitles(self) -> str:
+        return self.extract_subtitles()
 
     def save_mp3(self) -> str:
         # -y flag is to always override files
         file_name_without_extension = "".join(self.file_name.split(".")[:-1])
-        os.system(f"ffmpeg -y -i {self.file_path} {os.path.join(AUDIO_FILES_PATH, file_name_without_extension)}.mp3")
+        os.system(
+            f"ffmpeg -y -i {self.file_path} {os.path.join(AUDIO_FILES_PATH, file_name_without_extension)}.mp3"
+        )
         return f"{file_name_without_extension}.mp3"
 
     def extract_subtitles(self) -> str:
+        reader = easyocr.Reader(["pl"])
         cap = cv2.VideoCapture(self.file_path)
         frame_count = 0
         text_from_video = []

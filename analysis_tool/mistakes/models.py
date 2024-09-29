@@ -11,3 +11,6 @@ class Mistake:
     start_ts: float
     end_ts: float | None = None
     detail: str | None = None
+
+    def __str__(self):
+        return f"{self.type} @ {round(self.start_ts, 1)}s - {round(self.end_ts or self.start_ts + 1, 1)}s (confidence: {round(self.confidence, 2)})"

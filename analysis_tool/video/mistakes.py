@@ -45,12 +45,25 @@ def analyze_expressions(video: VideoParser) -> list[Mistake]:
         strongest_emotion = None
         max_confidence = 0
         for emotion_name, confidence in emotions[0]["emotions"].items():
-            if confidence > max_confidence and confidence > 0.9 and emotion_name != "neutral":
+            if (
+                confidence > max_confidence
+                and confidence > 0.9
+                and emotion_name != "neutral"
+            ):
                 strongest_emotion = emotion_name
                 max_confidence = confidence
 
         if strongest_emotion:
-            mistakes.append(Mistake(type=MistakeType.FACIAL_EXPRESSIONS, category=MistakeCategory.VIDEO, confidence=max_confidence, start_ts=current_time, end_ts=current_time + 1, detail=strongest_emotion))
+            mistakes.append(
+                Mistake(
+                    type=MistakeType.FACIAL_EXPRESSIONS,
+                    category=MistakeCategory.VIDEO,
+                    confidence=max_confidence,
+                    start_ts=current_time,
+                    end_ts=current_time + 1,
+                    detail=strongest_emotion,
+                )
+            )
 
     cap.release()
     return mistakes
@@ -70,6 +83,7 @@ def recognize_other_people(video: VideoParser) -> list[Mistake]:
     frame_count = 0
 
     mistakes = []
+    previous_boxes = []
     other_person_detected = False
 
     while cap.isOpened():
@@ -191,14 +205,16 @@ def detect_turning_away_and_gestures(video: VideoParser) -> list[Mistake]:
 
             # Check if the primary face is still present
             found_primary_face = False
-            for (x, y, w, h) in faces:
+            for x, y, w, h in faces:
                 # Compare the coordinates of the primary face with detected faces
                 if np.array_equal((x, y, w, h), primary_face_rect):
                     found_primary_face = True
                     detection_started = True
                     if turning_away:
                         turning_away = False
-                        mistakes[-1].end_ts = current_time  # Set end timestamp for turning away
+                        mistakes[-1].end_ts = (
+                            current_time  # Set end timestamp for turning away
+                        )
                     break
 
             # If the primary face is not found anymore
@@ -234,7 +250,7 @@ def detect_turning_away_and_gestures(video: VideoParser) -> list[Mistake]:
             # Check if hands have moved
             if previous_hand_positions is not None:
                 for prev_pos, curr_pos in zip(
-                        previous_hand_positions, current_hand_positions
+                    previous_hand_positions, current_hand_positions
                 ):
                     movement_length = sqrt(
                         (curr_pos[0] - prev_pos[0]) ** 2
